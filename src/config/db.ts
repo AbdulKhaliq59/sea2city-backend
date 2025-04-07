@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import 'dotenv/config';
-import { Category } from 'src/categories/entities/category.entity';
-import { ProductImage } from 'src/products/entities/product-image.entity';
-import { Product } from 'src/products/entities/product.entity';
-import { Service } from 'src/service/entities/service.entity';
-import { Subcategory } from 'src/subcategories/entities/subcategory.entity';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class DatabaseConnectionService implements TypeOrmOptionsFactory {
