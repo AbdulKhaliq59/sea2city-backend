@@ -13,6 +13,7 @@ import { Product } from "./products/entities/product.entity"
 import { ProductImage } from "./products/entities/product-image.entity"
 import { SharedModule } from './shared/shared.module';
 import { DatabaseConnectionService } from "./config/db"
+import { ServicesModule } from "./service/services.module"
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DatabaseConnectionService } from "./config/db"
     SubcategoriesModule,
     ProductsModule,
     SharedModule,
+    ServicesModule
   ],
 })
 export class AppModule { }

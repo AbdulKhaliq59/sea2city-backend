@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { Category } from 'src/categories/entities/category.entity';
 import { ProductImage } from 'src/products/entities/product-image.entity';
 import { Product } from 'src/products/entities/product.entity';
+import { Service } from 'src/service/entities/service.entity';
 import { Subcategory } from 'src/subcategories/entities/subcategory.entity';
 import { User } from 'src/users/entities/user.entity';
 
@@ -22,7 +23,7 @@ export class DatabaseConnectionService implements TypeOrmOptionsFactory {
             ssl: {
                 rejectUnauthorized: false
             },
-            entities: [User, Category, Subcategory, Product, ProductImage],
+            entities: [__dirname + '/../**/*.entity.{js,ts}'],
             synchronize: process.env.DB_SYNC === 'true',
             dropSchema: false,
             logging: false,
