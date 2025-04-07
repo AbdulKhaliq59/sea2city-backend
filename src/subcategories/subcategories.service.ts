@@ -19,12 +19,13 @@ export class SubcategoriesService {
         private paginationService: PaginationService
     ) { }
 
-    async create(createSubcategoryDto: CreateSubcategoryDto): Promise<Subcategory> {
+    async create(createSubcategoryDto: CreateSubcategoryDto, imageUrl?: string): Promise<Subcategory> {
         const category = await this.categoriesService.findOne(createSubcategoryDto.categoryId)
 
         const subcategory = this.subcategoriesRepository.create({
             ...createSubcategoryDto,
             category,
+            imageUrl
         })
 
         return this.subcategoriesRepository.save(subcategory)
@@ -57,7 +58,7 @@ export class SubcategoriesService {
         })
     }
 
-    async update(id: number, updateSubcategoryDto: UpdateSubcategoryDto): Promise<Subcategory> {
+    async update(id: number, updateSubcategoryDto: UpdateSubcategoryDto, imageUrl?: string): Promise<Subcategory> {
         const subcategory = await this.findOne(id)
 
         if (updateSubcategoryDto.categoryId) {
@@ -66,6 +67,11 @@ export class SubcategoriesService {
         }
 
         Object.assign(subcategory, updateSubcategoryDto)
+
+        if (imageUrl) {
+            subcategory.imageUrl = imageUrl
+        }
+
         return this.subcategoriesRepository.save(subcategory)
     }
 

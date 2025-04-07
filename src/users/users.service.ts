@@ -5,12 +5,15 @@ import * as bcrypt from "bcrypt"
 import { User } from "./entities/user.entity"
 import type { CreateUserDto } from "./dto/create-user.dto"
 import type { UpdateUserDto } from "./dto/update-user.dto"
+import { PaginationResponse } from "src/shared/pagination/pagination-response"
+import { PaginationService } from "src/shared/pagination/pagination.service"
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        private paginationService: PaginationService,
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
@@ -28,8 +31,9 @@ export class UsersService {
         return this.usersRepository.save(user)
     }
 
-    async findAll(): Promise<User[]> {
-        return this.usersRepository.find()
+    async findAll(page: number = 1, perPage: number = 10): Promise<PaginationResponse<User>> {
+        const users = await this.usersRepository.find();
+        return this.paginationService.paginate(users, page, perPage);
     }
 
     async findOne(id: number): Promise<User> {

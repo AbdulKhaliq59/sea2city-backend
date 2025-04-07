@@ -1,10 +1,9 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from "@nestjs/common"
+import { Injectable, NotFoundException } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import type { Repository } from "typeorm"
 import { Category } from "./entities/category.entity"
 import type { CreateCategoryDto } from "./dto/create-category.dto"
 import type { UpdateCategoryDto } from "./dto/update-category.dto"
-import { SubcategoriesService } from "src/subcategories/subcategories.service"
 import { PaginationService } from "src/shared/pagination/pagination.service"
 import { PaginationResponse } from "src/shared/pagination/pagination-response"
 
@@ -16,8 +15,11 @@ export class CategoriesService {
         private paginationService: PaginationService
     ) { }
 
-    async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-        const category = this.categoriesRepository.create(createCategoryDto)
+    async create(createCategoryDto: CreateCategoryDto, imageUrl?: string): Promise<Category> {
+        const category = this.categoriesRepository.create({
+            ...createCategoryDto,
+            imageUrl
+        })
         return this.categoriesRepository.save(category)
     }
 
@@ -42,12 +44,17 @@ export class CategoriesService {
         return category
     }
 
-    async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+    async update(id: number, updateCategoryDto: UpdateCategoryDto, imageUrl?: string): Promise<Category> {
         const category = await this.findOne(id)
+
         Object.assign(category, updateCategoryDto)
+
+        if (imageUrl) {
+            category.imageUrl = imageUrl
+        }
+
         return this.categoriesRepository.save(category)
     }
-
     async remove(id: number): Promise<void> {
         const category = await this.findOne(id)
         await this.categoriesRepository.remove(category)

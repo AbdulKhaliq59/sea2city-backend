@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from "@nestjs/common"
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger"
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from "@nestjs/common"
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger"
 import { UsersService } from "./users.service"
 import { CreateUserDto } from "./dto/create-user.dto"
 import { UpdateUserDto } from "./dto/update-user.dto"
@@ -7,6 +7,9 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard"
 import { RolesGuard } from "../auth/guards/roles.guard"
 import { Roles } from "../auth/decorators/roles.decorator"
 import { Role } from "./enums/role.enum"
+import { PaginationQueryDto } from "src/shared/pagination/pagination-query.dto"
+import { PaginationResponse } from "src/shared/pagination/pagination-response"
+import { User } from "./entities/user.entity"
 
 @ApiTags("users")
 @Controller("users")
@@ -32,9 +35,12 @@ export class UsersController {
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN)
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+    @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
     @Get()
-    findAll() {
-        return this.usersService.findAll()
+    findAll(@Query() paginationQuery: PaginationQueryDto): Promise<PaginationResponse<User>> {
+
+        return this.usersService.findAll(paginationQuery.page, paginationQuery.perPage);
     }
 
     @ApiOperation({ summary: 'Get user by ID' })

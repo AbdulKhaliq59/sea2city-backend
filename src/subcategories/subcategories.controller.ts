@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from "@nestjs/common"
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger"
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFile } from "@nestjs/common"
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from "@nestjs/swagger"
 import { SubcategoriesService } from "./subcategories.service"
 import { CreateSubcategoryDto } from "./dto/create-subcategory.dto"
 import { UpdateSubcategoryDto } from "./dto/update-subcategory.dto"
@@ -10,25 +10,52 @@ import { Role } from "../users/enums/role.enum"
 import { PaginationQueryDto } from "src/shared/pagination/pagination-query.dto"
 import { PaginationResponse } from "src/shared/pagination/pagination-response"
 import { Subcategory } from "./entities/subcategory.entity"
+import { ImageUploadService } from "src/shared/image-upload/image-upload.service"
+import { FileInterceptor } from "@nestjs/platform-express"
 
 @ApiTags("subcategories")
 @Controller("subcategories")
 export class SubcategoriesController {
-    constructor(private readonly subcategoriesService: SubcategoriesService) { }
+    constructor(
+        private readonly subcategoriesService: SubcategoriesService,
+        private readonly imageUploadService: ImageUploadService
+    ) { }
 
-    @ApiOperation({ summary: 'Create a new subcategory (Admin only)' })
+    @ApiOperation({ summary: 'Create a new subcategory with optional image (Admin only)' })
     @ApiResponse({ status: 201, description: 'Subcategory successfully created' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN)
-
     @Post()
-    create(@Body() createSubcategoryDto: CreateSubcategoryDto) {
-        return this.subcategoriesService.create(createSubcategoryDto);
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                categoryId: { type: 'number' },
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+            required: ['name', 'categoryId']
+        },
+    })
+    async create(
+        @Body() createSubcategoryDto: CreateSubcategoryDto,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        let imageUrl: any = null;
+        if (file) {
+            imageUrl = await this.imageUploadService.uploadImage(file);
+        }
+        return this.subcategoriesService.create(createSubcategoryDto, imageUrl);
     }
-
     @ApiOperation({ summary: "Get all subcategories" })
     @ApiResponse({ status: 200, description: "Return all subcategories" })
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
@@ -53,7 +80,7 @@ export class SubcategoriesController {
         return this.subcategoriesService.findByCategory(+categoryId);
     }
 
-    @ApiOperation({ summary: "Update subcategory (Admin only)" })
+    @ApiOperation({ summary: "Update subcategory with optional image (Admin only)" })
     @ApiResponse({ status: 200, description: "Subcategory successfully updated" })
     @ApiResponse({ status: 401, description: "Unauthorized" })
     @ApiResponse({ status: 403, description: "Forbidden" })
@@ -62,9 +89,34 @@ export class SubcategoriesController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN)
     @Patch(":id")
-    update(@Param('id') id: string, @Body() updateSubcategoryDto: UpdateSubcategoryDto) {
-        return this.subcategoriesService.update(+id, updateSubcategoryDto)
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                categoryId: { type: 'number' },
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    async update(
+        @Param('id') id: string,
+        @Body() updateSubcategoryDto: UpdateSubcategoryDto,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        let imageUrl: any = null;
+        if (file) {
+            imageUrl = await this.imageUploadService.uploadImage(file);
+        }
+        return this.subcategoriesService.update(+id, updateSubcategoryDto, imageUrl);
     }
+
 
     @ApiOperation({ summary: 'Delete subcategory (Admin only)' })
     @ApiResponse({ status: 200, description: 'Subcategory successfully deleted' })

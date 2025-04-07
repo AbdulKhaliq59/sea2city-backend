@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from "@nestjs/common"
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger"
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, UploadedFile } from "@nestjs/common"
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from "@nestjs/swagger"
 import { CategoriesService } from "./categories.service"
 import { CreateCategoryDto } from "./dto/create-category.dto"
 import { UpdateCategoryDto } from "./dto/update-category.dto"
@@ -10,13 +10,19 @@ import { Role } from "../users/enums/role.enum"
 import { PaginationQueryDto } from "src/shared/pagination/pagination-query.dto"
 import { PaginationResponse } from "src/shared/pagination/pagination-response"
 import { Category } from "./entities/category.entity"
+import { FileInterceptor } from "@nestjs/platform-express"
+import { ImageUploadService } from "src/shared/image-upload/image-upload.service"
 
 @ApiTags("categories")
 @Controller("categories")
 export class CategoriesController {
-    constructor(private readonly categoriesService: CategoriesService) { }
+    constructor(
+        private readonly categoriesService: CategoriesService,
+        private readonly imageUploadService: ImageUploadService
+    ) { }
 
     @ApiOperation({ summary: 'Create a new category (Admin only)' })
+    @ApiOperation({ summary: 'Create a new category with optional image (Admin only)' })
     @ApiResponse({ status: 201, description: 'Category successfully created' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -24,8 +30,32 @@ export class CategoriesController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN)
     @Post()
-    create(@Body() createCategoryDto: CreateCategoryDto) {
-        return this.categoriesService.create(createCategoryDto);
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    async create(
+        @Body() createCategoryDto: CreateCategoryDto,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        console.log("Received form data:", createCategoryDto);
+
+        let imageUrl: any = null;
+        if (file) {
+            imageUrl = await this.imageUploadService.uploadImage(file);
+        }
+        return this.categoriesService.create(createCategoryDto, imageUrl);
     }
 
     @ApiOperation({ summary: "Get all categories" })
@@ -45,7 +75,7 @@ export class CategoriesController {
         return this.categoriesService.findOne(+id);
     }
 
-    @ApiOperation({ summary: "Update category (Admin only)" })
+    @ApiOperation({ summary: "Update category with optional image (Admin only)" })
     @ApiResponse({ status: 200, description: "Category successfully updated" })
     @ApiResponse({ status: 401, description: "Unauthorized" })
     @ApiResponse({ status: 403, description: "Forbidden" })
@@ -54,8 +84,31 @@ export class CategoriesController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN)
     @Patch(":id")
-    update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-        return this.categoriesService.update(+id, updateCategoryDto)
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    async update(
+        @Param('id') id: string,
+        @Body() updateCategoryDto: UpdateCategoryDto,
+        @UploadedFile() file: Express.Multer.File
+    ) {
+        let imageUrl: any = null;
+        if (file) {
+            imageUrl = await this.imageUploadService.uploadImage(file);
+        }
+        return this.categoriesService.update(+id, updateCategoryDto, imageUrl);
     }
 
     @ApiOperation({ summary: 'Delete category (Admin only)' })

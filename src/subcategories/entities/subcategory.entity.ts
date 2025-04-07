@@ -22,6 +22,9 @@ export class Subcategory {
     @Column({ nullable: true })
     description: string
 
+    @Column({ nullable: true })
+    imageUrl: string
+
     @ManyToOne(
         () => Category,
         (category) => category.subcategories,
