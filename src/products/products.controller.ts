@@ -115,6 +115,18 @@ export class ProductsController {
         return this.productsService.findBySubcategory(+subcategoryId, paginationQuery.page, paginationQuery.perPage);
     }
 
+    @ApiOperation({ summary: "Get products by product type ID" })
+    @ApiResponse({ status: 200, description: "Return products for the product type" })
+    @ApiQuery({ name: "page", required: false, type: Number, description: "Page number" })
+    @ApiQuery({ name: "perPage", required: false, type: Number, description: "Items per page" })
+    @Get("product-type/:productTypeId")
+    findByProductType(
+        @Param('productTypeId') productTypeId: string,
+        @Query() paginationQuery: PaginationQueryDto,
+    ): Promise<PaginationResponse<Product>> {
+        return this.productsService.findByProductType(+productTypeId, paginationQuery.page, paginationQuery.perPage)
+    }
+
     @ApiOperation({ summary: "Update product (Admin only)" })
     @ApiResponse({ status: 200, description: "Product successfully updated" })
     @ApiResponse({ status: 401, description: "Unauthorized" })

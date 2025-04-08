@@ -80,6 +80,15 @@ export class ProductsService {
         return this.paginationService.paginate(products, page, perPage)
     }
 
+    async findByProductType(productTypeId: number, page = 1, perPage = 10): Promise<PaginationResponse<Product>> {
+        const products = await this.productsRepository.find({
+            where: { productType: { id: productTypeId } },
+            relations: ["subcategory", "images"],
+        });
+
+        return this.paginationService.paginate(products, page, perPage);
+    }
+
     async update(id: number, updateProductDto: UpdateProductDto): Promise<Product> {
         const product = await this.findOne(id)
 

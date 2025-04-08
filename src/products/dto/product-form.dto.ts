@@ -37,6 +37,10 @@ export class CreateProductFormDto {
     @IsString()
     @IsNotEmpty()
     subcategoryId: string;
+    @ApiProperty({ example: "1", required: false })
+    @IsString()
+    @IsOptional()
+    productTypeId?: string
 
     @ApiProperty({
         type: 'array',
@@ -87,6 +91,10 @@ export class UpdateProductFormDto {
     @IsString()
     @IsOptional()
     subcategoryId?: string;
+    @ApiProperty({ example: "1", required: false })
+    @IsString()
+    @IsOptional()
+    productTypeId?: string
 
     @ApiProperty({
         type: 'array',

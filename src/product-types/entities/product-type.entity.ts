@@ -8,12 +8,11 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
 } from "typeorm"
-import { Category } from "../../categories/entities/category.entity"
+import { Subcategory } from "../../subcategories/entities/subcategory.entity"
 import { Product } from "../../products/entities/product.entity"
-import { ProductType } from "../../product-types/entities/product-type.entity"
 
-@Entity("subcategories")
-export class Subcategory {
+@Entity("product_types")
+export class ProductType {
     @PrimaryGeneratedColumn()
     id: number
 
@@ -27,26 +26,19 @@ export class Subcategory {
     imageUrl: string
 
     @ManyToOne(
-        () => Category,
-        (category) => category.subcategories,
+        () => Subcategory,
+        (subcategory) => subcategory.productTypes,
         { onDelete: "CASCADE" },
     )
-    @JoinColumn({ name: "category_id" })
-    category: Category
+    @JoinColumn({ name: "subcategory_id" })
+    subcategory: Subcategory
 
     @OneToMany(
         () => Product,
-        (product) => product.subcategory,
+        (product) => product.productType,
         { cascade: true },
     )
     products: Product[]
-
-    @OneToMany(
-        () => ProductType,
-        (productType) => productType.subcategory,
-        { cascade: true },
-    )
-    productTypes: ProductType[]
 
     @CreateDateColumn()
     createdAt: Date

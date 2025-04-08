@@ -14,6 +14,7 @@ import { ProductImage } from "./products/entities/product-image.entity"
 import { SharedModule } from './shared/shared.module';
 import { DatabaseConnectionService } from "./config/db"
 import { ServicesModule } from "./service/services.module"
+import { ProductTypesModule } from './product-types/product-types.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { ServicesModule } from "./service/services.module"
     SubcategoriesModule,
     ProductsModule,
     SharedModule,
-    ServicesModule
+    ServicesModule,
+    ProductTypesModule
   ],
 })
 export class AppModule { }
