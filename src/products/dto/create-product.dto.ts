@@ -29,6 +29,11 @@ export class CreateProductDto {
     @IsOptional()
     additionalInfo?: Record<string, any>
 
+    @ApiProperty({ example: 1, required: false })
+    @IsNumber()
+    @IsOptional()
+    categoryId?: number
+
     @ApiProperty({ example: 1 })
     @IsNumber()
     @IsNotEmpty()

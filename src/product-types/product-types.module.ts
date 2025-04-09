@@ -12,6 +12,7 @@ import { SharedModule } from 'src/shared/shared.module';
     SubcategoriesModule,
     SharedModule],
   providers: [ProductTypesService],
-  controllers: [ProductTypesController]
+  controllers: [ProductTypesController],
+  exports: [ProductTypesService],
 })
 export class ProductTypesModule { }

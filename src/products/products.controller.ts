@@ -12,6 +12,7 @@ import {
     BadRequestException,
     Query,
     UploadedFiles,
+    NotFoundException,
 } from "@nestjs/common"
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express"
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from "@nestjs/swagger"
@@ -30,16 +31,26 @@ import { PaginationQueryDto } from "src/shared/pagination/pagination-query.dto"
 import { PaginationResponse } from "src/shared/pagination/pagination-response"
 import { Product } from "./entities/product.entity"
 import { CreateProductFormDto, UpdateProductFormDto } from "./dto/product-form.dto"
+import { CategoriesService } from "../categories/categories.service"
+import { SubcategoriesService } from "../subcategories/subcategories.service"
+import { ProductTypesService } from "../product-types/product-types.service"
 
 @ApiTags("products")
 @Controller("products")
 export class ProductsController {
-    constructor(private readonly productsService: ProductsService) { }
+    constructor(
+        private readonly productsService: ProductsService,
+        private readonly categoriesService: CategoriesService,
+        private readonly subcategoriesService: SubcategoriesService,
+        private readonly productTypesService: ProductTypesService,
+    ) { }
 
     @ApiOperation({ summary: 'Create a new product (Admin only)' })
     @ApiResponse({ status: 201, description: 'Product successfully created' })
+    @ApiResponse({ status: 400, description: 'Bad Request - Invalid data or IDs' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
+    @ApiResponse({ status: 404, description: 'Not Found - Category, Subcategory or ProductType not found' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: CreateProductFormDto })
     @ApiBearerAuth()
@@ -59,6 +70,55 @@ export class ProductsController {
             price: parseFloat(createProductFormDto.price),
             subcategoryId: parseInt(createProductFormDto.subcategoryId, 10),
         };
+
+        // Add categoryId if provided
+        if (createProductFormDto.categoryId) {
+            const categoryId = parseInt(createProductFormDto.categoryId, 10);
+
+            // Validate category exists
+            try {
+                await this.categoriesService.findOne(categoryId);
+            } catch (error) {
+                throw new NotFoundException(`Category with ID ${categoryId} not found`);
+            }
+
+            productData.categoryId = categoryId;
+
+            // Validate that subcategory belongs to the category
+            try {
+                const subcategory = await this.subcategoriesService.findOne(productData.subcategoryId);
+                if (subcategory.category.id !== categoryId) {
+                    throw new BadRequestException(`Subcategory with ID ${productData.subcategoryId} does not belong to category with ID ${categoryId}`);
+                }
+            } catch (error) {
+                if (error instanceof BadRequestException) {
+                    throw error;
+                }
+                throw new NotFoundException(`Subcategory with ID ${productData.subcategoryId} not found`);
+            }
+        } else {
+            // Validate subcategory exists even if categoryId is not provided
+            try {
+                await this.subcategoriesService.findOne(productData.subcategoryId);
+            } catch (error) {
+                throw new NotFoundException(`Subcategory with ID ${productData.subcategoryId} not found`);
+            }
+        }
+
+        // Handle productTypeId if provided
+        if (createProductFormDto.productTypeId) {
+            const productTypeId = parseInt(createProductFormDto.productTypeId, 10);
+
+            // Validate productType exists
+            try {
+                await this.productTypesService.findOne(productTypeId);
+            } catch (error) {
+                throw new NotFoundException(`Product Type with ID ${productTypeId} not found`);
+            }
+
+            productData.productTypeId = productTypeId;
+        }
+
         console.log("Parsed product data:", productData);
 
         // Handle optional fields
@@ -67,7 +127,6 @@ export class ProductsController {
                 productData.description = JSON.parse(JSON.stringify(createProductFormDto.description));
             } catch (e) {
                 console.log("error parsing description:", e);
-
                 throw new BadRequestException('Invalid description format');
             }
         }
@@ -111,8 +170,20 @@ export class ProductsController {
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
     @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
     @Get('subcategory/:subcategoryId')
-    findBySubcategory(@Param('subcategoryId') subcategoryId: string, @Query() paginationQuery: PaginationQueryDto): Promise<PaginationResponse<Product>> {
-        return this.productsService.findBySubcategory(+subcategoryId, paginationQuery.page, paginationQuery.perPage);
+    async findBySubcategory(
+        @Param('subcategoryId') subcategoryId: string,
+        @Query() paginationQuery: PaginationQueryDto
+    ): Promise<PaginationResponse<Product>> {
+        const subcatId = parseInt(subcategoryId, 10);
+
+        // Validate subcategory exists
+        try {
+            await this.subcategoriesService.findOne(subcatId);
+        } catch (error) {
+            throw new NotFoundException(`Subcategory with ID ${subcatId} not found`);
+        }
+
+        return this.productsService.findBySubcategory(subcatId, paginationQuery.page, paginationQuery.perPage);
     }
 
     @ApiOperation({ summary: "Get products by product type ID" })
@@ -120,18 +191,28 @@ export class ProductsController {
     @ApiQuery({ name: "page", required: false, type: Number, description: "Page number" })
     @ApiQuery({ name: "perPage", required: false, type: Number, description: "Items per page" })
     @Get("product-type/:productTypeId")
-    findByProductType(
+    async findByProductType(
         @Param('productTypeId') productTypeId: string,
         @Query() paginationQuery: PaginationQueryDto,
     ): Promise<PaginationResponse<Product>> {
-        return this.productsService.findByProductType(+productTypeId, paginationQuery.page, paginationQuery.perPage)
+        const prodTypeId = parseInt(productTypeId, 10);
+
+        // Validate product type exists
+        try {
+            await this.productTypesService.findOne(prodTypeId);
+        } catch (error) {
+            throw new NotFoundException(`Product Type with ID ${prodTypeId} not found`);
+        }
+
+        return this.productsService.findByProductType(prodTypeId, paginationQuery.page, paginationQuery.perPage);
     }
 
     @ApiOperation({ summary: "Update product (Admin only)" })
     @ApiResponse({ status: 200, description: "Product successfully updated" })
+    @ApiResponse({ status: 400, description: "Bad Request - Invalid data or IDs" })
     @ApiResponse({ status: 401, description: "Unauthorized" })
     @ApiResponse({ status: 403, description: "Forbidden" })
-    @ApiResponse({ status: 404, description: "Product not found" })
+    @ApiResponse({ status: 404, description: "Not Found - Product, Category, Subcategory, or ProductType not found" })
     @ApiConsumes('multipart/form-data')
     @ApiBody({ type: UpdateProductFormDto })
     @ApiBearerAuth()
@@ -144,13 +225,72 @@ export class ProductsController {
         @Body() updateProductFormDto: UpdateProductFormDto,
         @UploadedFiles() files: Array<Express.Multer.File>
     ) {
+        // Validate product exists
+        const productId = parseInt(id, 10);
+        try {
+            await this.productsService.findOne(productId);
+        } catch (error) {
+            throw new NotFoundException(`Product with ID ${productId} not found`);
+        }
+
         // Parse JSON fields from form data
         const updateProductDto: UpdateProductDto = {};
 
         // Handle all possible fields
         if (updateProductFormDto.name) updateProductDto.name = updateProductFormDto.name;
         if (updateProductFormDto.price) updateProductDto.price = parseFloat(updateProductFormDto.price);
-        if (updateProductFormDto.subcategoryId) updateProductDto.subcategoryId = parseInt(updateProductFormDto.subcategoryId, 10);
+
+        // Handle categoryId if provided
+        if (updateProductFormDto.categoryId) {
+            const categoryId = parseInt(updateProductFormDto.categoryId, 10);
+
+            // Validate category exists
+            try {
+                await this.categoriesService.findOne(categoryId);
+            } catch (error) {
+                throw new NotFoundException(`Category with ID ${categoryId} not found`);
+            }
+
+            updateProductDto.categoryId = categoryId;
+
+            // If subcategoryId is also provided, validate it belongs to the category
+            if (updateProductFormDto.subcategoryId) {
+                const subcategoryId = parseInt(updateProductFormDto.subcategoryId, 10);
+                try {
+                    const subcategory = await this.subcategoriesService.findOne(subcategoryId);
+                    if (subcategory.category.id !== categoryId) {
+                        throw new BadRequestException(`Subcategory with ID ${subcategoryId} does not belong to category with ID ${categoryId}`);
+                    }
+
+                    updateProductDto.subcategoryId = subcategoryId;
+                } catch (error) {
+                    if (error instanceof BadRequestException) {
+                        throw error;
+                    }
+                    throw new NotFoundException(`Subcategory with ID ${subcategoryId} not found`);
+                }
+            }
+        } else if (updateProductFormDto.subcategoryId) {
+            // Handle subcategoryId if provided without categoryId
+            const subcategoryId = parseInt(updateProductFormDto.subcategoryId, 10);
+            try {
+                await this.subcategoriesService.findOne(subcategoryId);
+                updateProductDto.subcategoryId = subcategoryId;
+            } catch (error) {
+                throw new NotFoundException(`Subcategory with ID ${subcategoryId} not found`);
+            }
+        }
+
+        // Handle productTypeId if provided
+        if (updateProductFormDto.productTypeId) {
+            const productTypeId = parseInt(updateProductFormDto.productTypeId, 10);
+            try {
+                await this.productTypesService.findOne(productTypeId);
+                updateProductDto.productTypeId = productTypeId;
+            } catch (error) {
+                throw new NotFoundException(`Product Type with ID ${productTypeId} not found`);
+            }
+        }
 
         if (updateProductFormDto.description) {
             try {
@@ -174,7 +314,7 @@ export class ProductsController {
             updateProductDto.imageUrls = imageUrls;
         }
 
-        return this.productsService.update(+id, updateProductDto);
+        return this.productsService.update(productId, updateProductDto);
     }
 
     @ApiOperation({ summary: 'Delete product (Admin only)' })
@@ -215,13 +355,21 @@ export class ProductsController {
     @UseInterceptors(FileInterceptor("file"))
     async uploadImage(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
         if (!file) {
-            throw new BadRequestException("No file uploaded")
+            throw new BadRequestException("No file uploaded");
+        }
+
+        // Validate product exists
+        const productId = parseInt(id, 10);
+        try {
+            await this.productsService.findOne(productId);
+        } catch (error) {
+            throw new NotFoundException(`Product with ID ${productId} not found`);
         }
 
         const imageUrl = await this.uploadFile(file);
 
         // Add the image URL to the product
-        return this.productsService.addImage(+id, imageUrl);
+        return this.productsService.addImage(productId, imageUrl);
     }
 
     /**

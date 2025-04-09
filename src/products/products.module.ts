@@ -8,12 +8,14 @@ import { SubcategoriesModule } from "../subcategories/subcategories.module"
 import { MulterModule } from "@nestjs/platform-express"
 import { SharedModule } from "src/shared/shared.module"
 import { ProductTypesModule } from "src/product-types/product-types.module"
+import { CategoriesModule } from "src/categories/categories.module"
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product, ProductImage]),
     SubcategoriesModule,
     SharedModule,
+    CategoriesModule,
     ProductTypesModule,
     MulterModule.register({
       dest: "./uploads",
