@@ -11,6 +11,10 @@ export class CreateProductDto {
     @IsNumber()
     @IsNotEmpty()
     price: number
+    @ApiProperty({ example: 100, required: false })
+    @IsNumber()
+    @IsOptional()
+    quantity?: number
 
     @ApiProperty({ example: ["Comfortable tent for your cat", "Easy to clean"], required: false })
     @IsArray()

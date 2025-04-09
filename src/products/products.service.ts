@@ -48,6 +48,7 @@ export class ProductsService {
         const product = this.productsRepository.create({
             name: createProductDto.name,
             price: createProductDto.price,
+            quantity: createProductDto.quantity || 0,
             description: createProductDto.description,
             additionalInfo: createProductDto.additionalInfo,
             subcategory,
@@ -151,6 +152,7 @@ export class ProductsService {
         // Update fields if provided
         if (updateProductDto.name !== undefined) product.name = updateProductDto.name;
         if (updateProductDto.price !== undefined) product.price = updateProductDto.price;
+        if (updateProductDto.quantity !== undefined) product.quantity = updateProductDto.quantity;
         if (updateProductDto.description !== undefined) product.description = updateProductDto.description;
         if (updateProductDto.additionalInfo !== undefined) product.additionalInfo = updateProductDto.additionalInfo;
 
@@ -179,6 +181,14 @@ export class ProductsService {
         }
 
         return savedProduct;
+    }
+
+    async updateQuantity(id: number, quantity: number): Promise<Product> {
+        const product = await this.findOne(id);
+
+        product.quantity = quantity;
+
+        return this.productsRepository.save(product);
     }
 
     async remove(id: number): Promise<void> {

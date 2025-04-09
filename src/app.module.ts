@@ -16,6 +16,13 @@ import { DatabaseConnectionService } from "./config/db"
 import { ServicesModule } from "./service/services.module"
 import { ProductTypesModule } from './product-types/product-types.module';
 
+import { CartModule } from './cart/cart.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import { WishlistController } from './wishlist/wishlist.controller';
+import { WishlistService } from './wishlist/wishlist.service';
+import { CartService } from './cart/cart.service';
+import { CartController } from './cart/cart.controller';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,7 +38,9 @@ import { ProductTypesModule } from './product-types/product-types.module';
     ProductsModule,
     SharedModule,
     ServicesModule,
-    ProductTypesModule
+    ProductTypesModule,
+    WishlistModule,
+    CartModule
   ],
 })
 export class AppModule { }

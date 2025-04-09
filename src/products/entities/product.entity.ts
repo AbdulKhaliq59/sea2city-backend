@@ -11,6 +11,8 @@ import {
 import { Subcategory } from "../../subcategories/entities/subcategory.entity"
 import { ProductImage } from "./product-image.entity"
 import { ProductType } from "../../product-types/entities/product-type.entity"
+import { CartItem } from "src/cart/entities/cart-item.entity"
+import { WishlistItem } from "src/wishlist/entities/wishlist-item.entity"
 
 @Entity("products")
 export class Product {
@@ -28,6 +30,9 @@ export class Product {
 
   @Column("json", { nullable: true })
   additionalInfo: Record<string, any>
+
+  @Column({ default: 0 })
+  quantity: number
 
   @ManyToOne(
     () => Subcategory,
@@ -51,6 +56,18 @@ export class Product {
     { cascade: true },
   )
   images: ProductImage[]
+
+  @OneToMany(
+    () => CartItem,
+    (cartItem) => cartItem.product
+  )
+  cartItems: CartItem[]
+
+  @OneToMany(
+    () => WishlistItem,
+    (wishlistItem) => wishlistItem.product
+  )
+  wishlistItems: WishlistItem[]
 
   @CreateDateColumn()
   createdAt: Date

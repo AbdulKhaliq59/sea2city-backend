@@ -12,6 +12,11 @@ export class CreateProductFormDto {
     @IsNotEmpty()
     price: string;
 
+    @ApiProperty({ example: "100", description: "Quantity of the product in stock" })
+    @IsString()
+    @IsNotEmpty()
+    quantity: string;
+
     @ApiProperty({
         example: JSON.stringify(["Comfortable tent for your cat", "Easy to clean"]),
         description: "JSON string array of descriptions",
@@ -20,6 +25,8 @@ export class CreateProductFormDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+
 
     @ApiProperty({
         example: JSON.stringify({
@@ -71,6 +78,11 @@ export class UpdateProductFormDto {
     @IsString()
     @IsOptional()
     price?: string;
+
+    @ApiProperty({ example: "100", description: "Quantity of the product in stock" })
+    @IsString()
+    @IsNotEmpty()
+    quantity: string;
 
     @ApiProperty({
         example: JSON.stringify(["Comfortable tent for your cat", "Easy to clean"]),

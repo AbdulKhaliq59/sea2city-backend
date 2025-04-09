@@ -68,6 +68,7 @@ export class ProductsController {
         const productData: CreateProductDto = {
             name: createProductFormDto.name,
             price: parseFloat(createProductFormDto.price),
+            quantity: parseInt(createProductFormDto.quantity, 10),
             subcategoryId: parseInt(createProductFormDto.subcategoryId, 10),
         };
 
@@ -239,6 +240,7 @@ export class ProductsController {
         // Handle all possible fields
         if (updateProductFormDto.name) updateProductDto.name = updateProductFormDto.name;
         if (updateProductFormDto.price) updateProductDto.price = parseFloat(updateProductFormDto.price);
+        if (updateProductFormDto.quantity) updateProductDto.quantity = parseInt(updateProductFormDto.quantity, 10);
 
         // Handle categoryId if provided
         if (updateProductFormDto.categoryId) {
@@ -315,6 +317,35 @@ export class ProductsController {
         }
 
         return this.productsService.update(productId, updateProductDto);
+    }
+
+    @ApiOperation({ summary: 'Update product quantity (Admin only)' })
+    @ApiResponse({ status: 200, description: 'Product quantity successfully updated' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden' })
+    @ApiResponse({ status: 404, description: 'Product not found' })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    @Patch(':id/quantity')
+    async updateQuantity(
+        @Param('id') id: string,
+        @Body() updateData: { quantity: number }
+    ) {
+        const productId = parseInt(id, 10);
+
+        // Validate product exists
+        try {
+            await this.productsService.findOne(productId);
+        } catch (error) {
+            throw new NotFoundException(`Product with ID ${productId} not found`);
+        }
+
+        if (updateData.quantity < 0) {
+            throw new BadRequestException('Quantity cannot be negative');
+        }
+
+        return this.productsService.updateQuantity(productId, updateData.quantity);
     }
 
     @ApiOperation({ summary: 'Delete product (Admin only)' })

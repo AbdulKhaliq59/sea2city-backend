@@ -23,6 +23,7 @@ import { CategoriesModule } from "src/categories/categories.module"
   ],
   controllers: [ProductsController],
   providers: [ProductsService],
+  exports: [ProductsService],
 })
 export class ProductsModule { }
 
