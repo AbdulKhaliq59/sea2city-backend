@@ -25,6 +25,7 @@ import { CartController } from './cart/cart.controller';
 import { BrandsController } from './brands/brands.controller';
 import { BrandsService } from './brands/brands.service';
 import { BrandsModule } from './brands/brands.module';
+import { HomePostersModule } from "./home-posters/home-posters.module"
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { BrandsModule } from './brands/brands.module';
     ProductTypesModule,
     WishlistModule,
     CartModule,
-    BrandsModule
+    BrandsModule,
+    HomePostersModule
   ],
 })
 export class AppModule { }
