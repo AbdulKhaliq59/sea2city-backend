@@ -33,6 +33,10 @@ export class CreateProductDto {
     @IsOptional()
     additionalInfo?: Record<string, any>
 
+    @IsOptional()
+    @IsNumber()
+    brandId?: number;
+
     @ApiProperty({ example: 1, required: false })
     @IsNumber()
     @IsOptional()

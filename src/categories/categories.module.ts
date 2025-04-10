@@ -11,7 +11,6 @@ import { ImageUploadService } from "src/shared/image-upload/image-upload.service
   imports: [TypeOrmModule.forFeature([Category]),
   forwardRef(() => SubcategoriesModule),
     SharedModule,
-    // ImageUploadService
   ],
   controllers: [CategoriesController],
   providers: [CategoriesService],

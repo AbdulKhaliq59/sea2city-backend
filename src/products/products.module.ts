@@ -9,14 +9,17 @@ import { MulterModule } from "@nestjs/platform-express"
 import { SharedModule } from "src/shared/shared.module"
 import { ProductTypesModule } from "src/product-types/product-types.module"
 import { CategoriesModule } from "src/categories/categories.module"
+import { BrandsModule } from "src/brands/brands.module"
+import { ProductPrice } from "./entities/product-price.entity"
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, ProductImage]),
+    TypeOrmModule.forFeature([Product, ProductImage, ProductPrice]),
     SubcategoriesModule,
     SharedModule,
     CategoriesModule,
     ProductTypesModule,
+    BrandsModule,
     MulterModule.register({
       dest: "./uploads",
     }),

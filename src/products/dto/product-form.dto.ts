@@ -12,6 +12,11 @@ export class CreateProductFormDto {
     @IsNotEmpty()
     price: string;
 
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    brandId?: string;
+
     @ApiProperty({ example: "100", description: "Quantity of the product in stock" })
     @IsString()
     @IsNotEmpty()
@@ -78,6 +83,9 @@ export class UpdateProductFormDto {
     @IsString()
     @IsOptional()
     price?: string;
+
+    @ApiProperty({ required: false })
+    brandId?: string;
 
     @ApiProperty({ example: "100", description: "Quantity of the product in stock" })
     @IsString()

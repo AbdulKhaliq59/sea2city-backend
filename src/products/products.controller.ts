@@ -34,6 +34,7 @@ import { CreateProductFormDto, UpdateProductFormDto } from "./dto/product-form.d
 import { CategoriesService } from "../categories/categories.service"
 import { SubcategoriesService } from "../subcategories/subcategories.service"
 import { ProductTypesService } from "../product-types/product-types.service"
+import { BrandsService } from "src/brands/brands.service"
 
 @ApiTags("products")
 @Controller("products")
@@ -43,6 +44,7 @@ export class ProductsController {
         private readonly categoriesService: CategoriesService,
         private readonly subcategoriesService: SubcategoriesService,
         private readonly productTypesService: ProductTypesService,
+        private readonly brandsService: BrandsService,
     ) { }
 
     @ApiOperation({ summary: 'Create a new product (Admin only)' })
@@ -72,6 +74,19 @@ export class ProductsController {
             subcategoryId: parseInt(createProductFormDto.subcategoryId, 10),
         };
 
+        if (createProductFormDto.brandId) {
+            const brandId = parseInt(createProductFormDto.brandId, 10);
+
+            // Validate brand exists
+            try {
+                await this.brandsService.findOne(brandId);
+            } catch (error) {
+                throw new NotFoundException(`Brand with ID ${brandId} not found`);
+            }
+
+            productData.brandId = brandId;
+        }
+        
         // Add categoryId if provided
         if (createProductFormDto.categoryId) {
             const categoryId = parseInt(createProductFormDto.categoryId, 10);
@@ -208,6 +223,43 @@ export class ProductsController {
         return this.productsService.findByProductType(prodTypeId, paginationQuery.page, paginationQuery.perPage);
     }
 
+    @ApiOperation({ summary: 'Get products by brand ID' })
+    @ApiResponse({ status: 200, description: 'Return products for the brand' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+    @ApiQuery({ name: 'perPage', required: false, type: Number, description: 'Items per page' })
+    @Get('brand/:brandId')
+    async findByBrand(
+        @Param('brandId') brandId: string,
+        @Query() paginationQuery: PaginationQueryDto
+    ): Promise<PaginationResponse<Product>> {
+        const brandIdNum = parseInt(brandId, 10);
+
+        // Validate brand exists
+        try {
+            await this.brandsService.findOne(brandIdNum);
+        } catch (error) {
+            throw new NotFoundException(`Brand with ID ${brandIdNum} not found`);
+        }
+
+        return this.productsService.findByBrand(brandIdNum, paginationQuery.page, paginationQuery.perPage);
+    }
+    @ApiOperation({ summary: 'Get product price history' })
+    @ApiResponse({ status: 200, description: 'Return price history for the product' })
+    @ApiResponse({ status: 404, description: 'Product not found' })
+    @Get(':id/price-history')
+    async getPriceHistory(@Param('id') id: string) {
+        const productId = parseInt(id, 10);
+
+        // Validate product exists
+        try {
+            await this.productsService.findOne(productId);
+        } catch (error) {
+            throw new NotFoundException(`Product with ID ${productId} not found`);
+        }
+
+        return this.productsService.getPriceHistory(productId);
+    }
+
     @ApiOperation({ summary: "Update product (Admin only)" })
     @ApiResponse({ status: 200, description: "Product successfully updated" })
     @ApiResponse({ status: 400, description: "Bad Request - Invalid data or IDs" })
@@ -246,6 +298,15 @@ export class ProductsController {
         if (updateProductFormDto.categoryId) {
             const categoryId = parseInt(updateProductFormDto.categoryId, 10);
 
+            if (updateProductFormDto.brandId) {
+                const brandId = parseInt(updateProductFormDto.brandId, 10);
+                try {
+                    await this.brandsService.findOne(brandId);
+                    updateProductDto.brandId = brandId;
+                } catch (error) {
+                    throw new NotFoundException(`Brand with ID ${brandId} not found`);
+                }
+            }
             // Validate category exists
             try {
                 await this.categoriesService.findOne(categoryId);

@@ -22,6 +22,9 @@ import { WishlistController } from './wishlist/wishlist.controller';
 import { WishlistService } from './wishlist/wishlist.service';
 import { CartService } from './cart/cart.service';
 import { CartController } from './cart/cart.controller';
+import { BrandsController } from './brands/brands.controller';
+import { BrandsService } from './brands/brands.service';
+import { BrandsModule } from './brands/brands.module';
 
 @Module({
   imports: [
@@ -40,7 +43,8 @@ import { CartController } from './cart/cart.controller';
     ServicesModule,
     ProductTypesModule,
     WishlistModule,
-    CartModule
+    CartModule,
+    BrandsModule
   ],
 })
 export class AppModule { }

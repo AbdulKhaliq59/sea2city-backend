@@ -10,6 +10,8 @@ import { CategoriesService } from "../categories/categories.service"
 import { ProductTypesService } from "../product-types/product-types.service"
 import { PaginationService } from "src/shared/pagination/pagination.service"
 import { PaginationResponse } from "src/shared/pagination/pagination-response"
+import { BrandsService } from "src/brands/brands.service"
+import { ProductPrice } from "./entities/product-price.entity"
 
 @Injectable()
 export class ProductsService {
@@ -18,10 +20,13 @@ export class ProductsService {
         private productsRepository: Repository<Product>,
         @InjectRepository(ProductImage)
         private productImagesRepository: Repository<ProductImage>,
+        @InjectRepository(ProductPrice)
+        private productPricesRepository: Repository<ProductPrice>,
         private subcategoriesService: SubcategoriesService,
         private categoriesService: CategoriesService,
         private productTypesService: ProductTypesService,
-        private paginationService: PaginationService
+        private paginationService: PaginationService,
+        private brandsService: BrandsService,
     ) { }
 
     async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -45,6 +50,11 @@ export class ProductsService {
             productType = await this.productTypesService.findOne(createProductDto.productTypeId);
         }
 
+        let brand: any = null;
+        if (createProductDto.brandId) {
+            brand = await this.brandsService.findOne(createProductDto.brandId);
+        }
+
         const product = this.productsRepository.create({
             name: createProductDto.name,
             price: createProductDto.price,
@@ -53,12 +63,18 @@ export class ProductsService {
             additionalInfo: createProductDto.additionalInfo,
             subcategory,
             productType,
+            brand
         });
 
         console.log("Product to be saved:", product);
 
         const savedProduct = await this.productsRepository.save(product);
 
+        const priceHistory = this.productPricesRepository.create({
+            price: createProductDto.price,
+            product: savedProduct,
+        });
+        await this.productPricesRepository.save(priceHistory);
         if (createProductDto.imageUrls && createProductDto.imageUrls.length > 0) {
             const productImages = createProductDto.imageUrls.map((url) => {
                 return this.productImagesRepository.create({
@@ -127,10 +143,14 @@ export class ProductsService {
 
         let subcategory = product.subcategory;
         let productType = product.productType;
+        let brand = product.brand;
 
         // Update subcategory if provided
         if (updateProductDto.subcategoryId) {
             subcategory = await this.subcategoriesService.findOne(updateProductDto.subcategoryId);
+        }
+        if (updateProductDto.brandId) {
+            brand = await this.brandsService.findOne(updateProductDto.brandId);
         }
 
         // If categoryId is provided, validate that subcategory belongs to the category
@@ -149,6 +169,14 @@ export class ProductsService {
             productType = await this.productTypesService.findOne(updateProductDto.productTypeId);
         }
 
+        if (updateProductDto.price !== undefined && updateProductDto.price !== product.price) {
+            const priceHistory = this.productPricesRepository.create({
+                price: updateProductDto.price,
+                product,
+            });
+            await this.productPricesRepository.save(priceHistory);
+        }
+
         // Update fields if provided
         if (updateProductDto.name !== undefined) product.name = updateProductDto.name;
         if (updateProductDto.price !== undefined) product.price = updateProductDto.price;
@@ -159,6 +187,7 @@ export class ProductsService {
         // Update relationships
         product.subcategory = subcategory;
         product.productType = productType;
+        product.brand = brand;
 
         const savedProduct = await this.productsRepository.save(product);
 
@@ -181,6 +210,15 @@ export class ProductsService {
         }
 
         return savedProduct;
+    }
+
+    async findByBrand(brandId: number, page: number = 1, perPage: number = 10): Promise<PaginationResponse<Product>> {
+        const products = await this.productsRepository.find({
+            where: { brand: { id: brandId } },
+            relations: ["subcategory", "subcategory.category", "images", "productType", "brand"],
+        });
+
+        return this.paginationService.paginate(products, page, perPage);
     }
 
     async updateQuantity(id: number, quantity: number): Promise<Product> {
@@ -213,5 +251,13 @@ export class ProductsService {
         product.images.push(productImage);
 
         return product;
+    }
+    async getPriceHistory(id: number): Promise<ProductPrice[]> {
+        const product = await this.findOne(id);
+
+        return this.productPricesRepository.find({
+            where: { product: { id: product.id } },
+            order: { createdAt: 'DESC' },
+        });
     }
 }

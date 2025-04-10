@@ -1,3 +1,4 @@
+// src/products/entities/product.entity.ts
 import {
   Entity,
   Column,
@@ -7,71 +8,88 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from "typeorm"
-import { Subcategory } from "../../subcategories/entities/subcategory.entity"
-import { ProductImage } from "./product-image.entity"
-import { ProductType } from "../../product-types/entities/product-type.entity"
-import { CartItem } from "src/cart/entities/cart-item.entity"
-import { WishlistItem } from "src/wishlist/entities/wishlist-item.entity"
+} from "typeorm";
+import { Subcategory } from "../../subcategories/entities/subcategory.entity";
+import { ProductImage } from "./product-image.entity";
+import { ProductType } from "../../product-types/entities/product-type.entity";
+import { CartItem } from "src/cart/entities/cart-item.entity";
+import { WishlistItem } from "src/wishlist/entities/wishlist-item.entity";
+import { Brand } from "../../brands/entities/brand.entity";
+import { ProductPrice } from "./product-price.entity";
 
 @Entity("products")
 export class Product {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column()
-  name: string
+  name: string;
 
   @Column("decimal", { precision: 10, scale: 2 })
-  price: number
+  price: number;
 
   @Column("simple-array", { nullable: true })
-  description: string[]
+  description: string[];
 
   @Column("json", { nullable: true })
-  additionalInfo: Record<string, any>
+  additionalInfo: Record<string, any>;
 
   @Column({ default: 0 })
-  quantity: number
+  quantity: number;
 
   @ManyToOne(
     () => Subcategory,
     (subcategory) => subcategory.products,
-    { onDelete: "CASCADE" },
+    { onDelete: "CASCADE" }
   )
   @JoinColumn({ name: "subcategory_id" })
-  subcategory: Subcategory
+  subcategory: Subcategory;
 
   @ManyToOne(
     () => ProductType,
     (productType) => productType.products,
-    { onDelete: "SET NULL", nullable: true },
+    { onDelete: "SET NULL", nullable: true }
   )
   @JoinColumn({ name: "product_type_id" })
-  productType: ProductType
+  productType: ProductType;
+
+  @ManyToOne(
+    () => Brand,
+    (brand) => brand.products,
+    { onDelete: "SET NULL", nullable: true }
+  )
+  @JoinColumn({ name: "brand_id" })
+  brand: Brand;
 
   @OneToMany(
     () => ProductImage,
     (image) => image.product,
-    { cascade: true },
+    { cascade: true }
   )
-  images: ProductImage[]
+  images: ProductImage[];
+
+  @OneToMany(
+    () => ProductPrice,
+    (price) => price.product,
+    { cascade: true }
+  )
+  priceHistory: ProductPrice[];
 
   @OneToMany(
     () => CartItem,
     (cartItem) => cartItem.product
   )
-  cartItems: CartItem[]
+  cartItems: CartItem[];
 
   @OneToMany(
     () => WishlistItem,
     (wishlistItem) => wishlistItem.product
   )
-  wishlistItems: WishlistItem[]
+  wishlistItems: WishlistItem[];
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }
