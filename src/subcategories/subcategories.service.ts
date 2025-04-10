@@ -20,15 +20,24 @@ export class SubcategoriesService {
     ) { }
 
     async create(createSubcategoryDto: CreateSubcategoryDto, imageUrl?: string): Promise<Subcategory> {
-        const category = await this.categoriesService.findOne(createSubcategoryDto.categoryId)
+        try {
+            console.log('ImageURL',imageUrl);
+            
+            const category = await this.categoriesService.findOne(createSubcategoryDto.categoryId)
 
-        const subcategory = this.subcategoriesRepository.create({
-            ...createSubcategoryDto,
-            category,
-            imageUrl
-        })
+            const subcategory = this.subcategoriesRepository.create({
+                ...createSubcategoryDto,
+                category,
+                imageUrl
+            })
 
-        return this.subcategoriesRepository.save(subcategory)
+            return this.subcategoriesRepository.save(subcategory)
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(`Category with ID ${createSubcategoryDto.categoryId} not found`)
+            }
+            throw error
+        }
     }
 
     async findAll(page: number = 1, perPage: number = 10): Promise<PaginationResponse<Subcategory>> {
@@ -62,8 +71,15 @@ export class SubcategoriesService {
         const subcategory = await this.findOne(id)
 
         if (updateSubcategoryDto.categoryId) {
-            const category = await this.categoriesService.findOne(updateSubcategoryDto.categoryId)
-            subcategory.category = category
+            try {
+                const category = await this.categoriesService.findOne(updateSubcategoryDto.categoryId)
+                subcategory.category = category
+            } catch (error) {
+                if (error instanceof NotFoundException) {
+                    throw new NotFoundException(`Category with ID ${updateSubcategoryDto.categoryId} not found`)
+                }
+                throw error
+            }
         }
 
         Object.assign(subcategory, updateSubcategoryDto)

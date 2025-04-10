@@ -50,6 +50,8 @@ export class SubcategoriesController {
         @Body() createSubcategoryDto: CreateSubcategoryDto,
         @UploadedFile() file: Express.Multer.File
     ) {
+        console.log("Creating subcategory with data:", createSubcategoryDto);
+
         let imageUrl: any = null;
         if (file) {
             imageUrl = await this.imageUploadService.uploadImage(file);
