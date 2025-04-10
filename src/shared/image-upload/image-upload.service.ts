@@ -1,19 +1,19 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
 export class ImageUploadService {
-    constructor(private configService: ConfigService) { }
+    constructor() { }
 
     async uploadImage(file: Express.Multer.File): Promise<null> {
         if (!file) {
             return null;
         }
 
+        
         const formData = new FormData();
         formData.append('file', new Blob([file.buffer]), file.originalname);
-
+        
         try {
             const response = await axios.post("https://api.storage.ishema.rw/upload", formData, {
                 headers: {

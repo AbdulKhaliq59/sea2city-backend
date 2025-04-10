@@ -35,6 +35,7 @@ import { CategoriesService } from "../categories/categories.service"
 import { SubcategoriesService } from "../subcategories/subcategories.service"
 import { ProductTypesService } from "../product-types/product-types.service"
 import { BrandsService } from "src/brands/brands.service"
+import { ImageUploadService } from "src/shared/image-upload/image-upload.service"
 
 @ApiTags("products")
 @Controller("products")
@@ -45,6 +46,7 @@ export class ProductsController {
         private readonly subcategoriesService: SubcategoriesService,
         private readonly productTypesService: ProductTypesService,
         private readonly brandsService: BrandsService,
+        private readonly imageUploadService: ImageUploadService
     ) { }
 
     @ApiOperation({ summary: 'Create a new product (Admin only)' })
@@ -64,7 +66,6 @@ export class ProductsController {
         @Body() createProductFormDto: CreateProductFormDto,
         @UploadedFiles() files: Array<Express.Multer.File>
     ) {
-        console.log("Received form data:", createProductFormDto);
 
         // Parse JSON fields from form data
         const productData: CreateProductDto = {
@@ -134,8 +135,6 @@ export class ProductsController {
 
             productData.productTypeId = productTypeId;
         }
-
-        console.log("Parsed product data:", productData);
 
         // Handle optional fields
         if (createProductFormDto.description) {
@@ -493,11 +492,14 @@ export class ProductsController {
      * Helper method to upload multiple files
      */
     private async uploadFiles(files: Array<Express.Multer.File>): Promise<string[]> {
-        if (!files || files.length === 0) {
-            return [];
-        }
-
-        const uploadPromises = files.map(file => this.uploadFile(file));
-        return Promise.all(uploadPromises);
+        const imageUrls : string[] = [];
+        
+        if(files && files.length > 0) {
+            for (const file of files) {
+                const imageUrl:any = await this.imageUploadService.uploadImage(file);
+                imageUrls.push(imageUrl);
+            }
+        }        
+        return imageUrls;
     }
 }

@@ -11,6 +11,7 @@ import { ProductTypesModule } from "src/product-types/product-types.module"
 import { CategoriesModule } from "src/categories/categories.module"
 import { BrandsModule } from "src/brands/brands.module"
 import { ProductPrice } from "./entities/product-price.entity"
+import { memoryStorage } from "multer"
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { ProductPrice } from "./entities/product-price.entity"
     ProductTypesModule,
     BrandsModule,
     MulterModule.register({
-      dest: "./uploads",
+      storage: memoryStorage()
     }),
   ],
   controllers: [ProductsController],
