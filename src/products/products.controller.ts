@@ -136,16 +136,7 @@ export class ProductsController {
             productData.productTypeId = productTypeId;
         }
 
-        // Handle optional fields
-        if (createProductFormDto.description) {
-            try {
-                productData.description = JSON.parse(JSON.stringify(createProductFormDto.description));
-            } catch (e) {
-                console.log("error parsing description:", e);
-                throw new BadRequestException('Invalid description format');
-            }
-        }
-
+      
         if (createProductFormDto.additionalInfo) {
             try {
                 productData.additionalInfo = JSON.parse(createProductFormDto.additionalInfo);

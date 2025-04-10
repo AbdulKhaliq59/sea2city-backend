@@ -15,12 +15,11 @@ export class CreateProductDto {
     @IsNumber()
     @IsOptional()
     quantity?: number
-
-    @ApiProperty({ example: ["Comfortable tent for your cat", "Easy to clean"], required: false })
-    @IsArray()
-    @IsString({ each: true })
+    
+    @ApiProperty({ example: "Comfortable tent for your cat", required: false })
+    @IsString()
     @IsOptional()
-    description?: string[]
+    description?: string
 
     @ApiProperty({
         example: {

@@ -28,8 +28,8 @@ export class Product {
   @Column("decimal", { precision: 10, scale: 2 })
   price: number;
 
-  @Column("simple-array", { nullable: true })
-  description: string[];
+  @Column({ nullable: true })
+  description: string;
 
   @Column("json", { nullable: true })
   additionalInfo: Record<string, any>;
